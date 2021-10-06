@@ -1,0 +1,244 @@
+using System;
+using System.IO;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Text.RegularExpressions;
+using MathNet.Numerics;
+using MathNet.Numerics.LinearAlgebra.Double;
+using MathNet.Numerics.LinearAlgebra.Solvers;
+using System.Collections;
+ 
+namespace WindowsFormsApplication1
+{
+ 
+    public partial class Form1 : Form
+    {
+        public Form1()
+        {
+            InitializeComponent();
+        }
+ 
+        string path;
+        bool u;
+        int i1, size;
+ 
+        private void button1_Click(object sender, EventArgs e)
+        {
+            float[] mas = new float[size];
+ 
+            List<Ver_Symbol> Ver_S = new List<Ver_Symbol>();
+ 
+          //  List<Uzel> Uzel_ = new List<Uzel>();
+ 
+            Dictionary<string, float> ar = new Dictionary<string, float>();
+            List<float> bezYsl_ver = new List<float>();
+            List<float> Symbol2 = new List<float>();
+            List<float> Symbol3 = new List<float>();
+ 
+            string r;
+ 
+            int q = 0, h = 0, k = 0, count =1; 
+            float f;
+            double D = 0;
+            string b;
+ 
+            char[] a = new char[27] { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 
+                                     'J','K','L','M','N','O','P','Q','R','S','T',
+                                       'U','V','W','X','Y','Z',' '};
+ 
+            char[] rus = new char[34] {'А', 'Б', 'В', 'Г', 'Д', 'Е', 'Ё', 'Ж', 'З', 
+                                     'И','Й','К','Л','М','Н','О','П','Р','С','Т',
+                                       'У','Ф','Х','Ц','Ч','Ш','Щ','Ъ','Ы','Ь','Э','Ю','Я',' '};
+ 
+            using (StreamReader sr = new StreamReader(path))
+            {
+                string text = sr.ReadToEnd();
+                char[] chars = text.ToCharArray();    // посимвольный проход по тексту
+ 
+                if(u==true)
+                    mas = Chastota(a, chars,size);
+                else
+                    mas = Chastota(rus, chars,size);
+            }
+ 
+            richTextBox1.Text = " Частоты символов алфавита: "+"\n";
+            for (int i = 0; i < mas.Length; i++)
+            
+            {
+                if(mas[i]!=0)
+                richTextBox1.Text +=count++ +"\t" +mas[i].ToString()+"\n";
+            }
+        
+            f = mas.Sum();
+ 
+            for (int i = 0; i < mas.Length; i++)
+            {
+                if (mas[i] != 0)
+                {
+                    
+                    bezYsl_ver.Add(mas[i]/f);
+                }
+            }
+ 
+            richTextBox1.Text += "\n Безусловная вер. символов алфавита: " + "\n";
+ 
+            richTextBox1.Text += "\n";
+            for (int i = 0; i < bezYsl_ver.Count; i++)
+            {
+                if (u == true)
+                {
+ 
+                   Ver_s.Add(new Ver_Symbol(a[i].ToString(), bezYsl_ver[i]));
+ 
+                }
+                else
+                {
+ 
+                    Ver_s.Add(new Ver_Symbol(rus[i].ToString(), bezYsl_ver[i]));
+                }
+                    
+            }
+ 
+            for (int i = 0; i < Ver_s.Count; i++)
+            {
+                if (u == true)
+                richTextBox1.Text += Ver_s[i] + "\n";
+                else
+                    richTextBox1.Text += Ver_s[i].ToString() + "\n";
+            }
+ 
+           Ver_S.Sort(delegate(Ver_Symbol mc1, Ver_Symbol mc2)   // сортировка
+            {
+                return mc1.a.CompareTo(mc2.a);
+            });
+          
+          richTextBox1.Text += "\n";
+          for (int i = 0; i < Ver_S.Count; i++)
+              richTextBox1.Text += Ver_S[i].s + "\t" + Ver_S[i].a + "\n";
+ 
+          richTextBox1.Text += "\n";
+          while (Ver_S.Count != 1)
+          {
+              Ver_S.Sort(delegate(Ver_Symbol mc1, Ver_Symbol mc2)  // сортировка
+              {
+                  return mc1.a.CompareTo(mc2.a);
+              });
+ 
+              r = Ver_S[0].s;
+              for (int i = 1; i < Ver_S.Count; i++) // присваиваем отсорт. лист переменной r
+              r+=Ver_S[i].s;
+ 
+      //        Ver_Symbol Left_ = Ver_S[0];
+      //        Ver_Symbol Right_= Ver_S[1];
+ 
+       //       Uzel parent = new Uzel(Left_, Right_);
+ 
+            Ver_S[0].a = Ver_S[0].a + Ver_S[1].a;  // суммируем минимальные элементы
+             Ver_S[0].s = Ver_S[0].s + Ver_S[1].s;
+ 
+                  richTextBox1.Text += r + "\t\t" + Ver_S[0].s + "\t" + Ver_S[0].a;   // выводим отсортированный лист и сумму мин. элементов
+                  richTextBox1.Text += "\n";
+ 
+                  ar.Add(Ver_S[0].s, Ver_S[0].a);
+              Ver_S.RemoveAt(0);
+              Ver_S.RemoveAt(1);
+ 
+      //        Ver_S.Add(parent);
+          }
+ 
+        //  foreach (var i in ar)
+          //    richTextBox1.Text += i.Key + "\t" + i.Value + "\n"; 
+          
+          richTextBox1.Text += "\n";
+          for (int i = 0; i < Ver_S.Count; i++)
+              richTextBox1.Text += Ver_S[i].s + "\t" + Ver_S[i].a + "\n"; // вывод основания дерева
+ 
+        }
+ 
+        private void button2_Click(object sender, EventArgs e)
+        {
+            
+           OpenFileDialog openfile = new OpenFileDialog();
+           openfile.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
+ 
+            if (openfile.ShowDialog() == DialogResult.OK)
+                path = openfile.FileName;
+        }
+ 
+        private void button3_Click(object sender, EventArgs e)
+        {
+            richTextBox1.Clear();
+            textBox1.Clear();
+        }
+ 
+        public static float[] Chastota(char[] alfavit, char[] chars1,int size1)
+        {
+            float[] mas2 = new float[size1];
+ 
+                for (int i = 0; i < alfavit.Length; i++)
+                {
+                    for (int j = 0; j < chars1.Length; j++)
+                    {
+                        if (alfavit[i] == Char.ToUpper(chars1[j]))
+                        {
+ 
+                             mas2[alfavit[i]]++;
+                            
+                        }
+                    }
+                }
+ 
+            return mas2;
+        }
+ 
+        private void button5_Click(object sender, EventArgs e)
+        {
+            u = true;
+            size = 256;
+        }
+ 
+        private void button4_Click(object sender, EventArgs e)
+        {
+            u = false;
+            size = 2560;
+        }
+ 
+        class Ver_Symbol
+        {
+ 
+            public float a;
+            public string s;
+ 
+            public Ver_Symbol(string ch, float number)
+            {
+                this.s = ch; this.a = number;
+                
+            }
+ 
+        }
+ 
+  /*      class Uzel
+        {
+            public float a;
+ 
+          public  Ver_Symbol left;
+           public Ver_Symbol right;
+ 
+            public Uzel(Ver_Symbol L, Ver_Symbol R)
+            {
+                this.left = L; this.right = R;
+                a = L.a + R.a;
+            }
+   
+        }
+ */    
+        
+    }
+ 
+}
